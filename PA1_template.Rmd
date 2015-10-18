@@ -34,7 +34,7 @@ head(Dataset)
 
 ##What is mean total number of steps taken per day?
 * Calculate the total number of steps taken per day, and make a histogram of the total number of steps taken each day
-```{R, echo = TURE}
+```{R}
 stepperday<- aggregate(steps ~ date, data = Dataset, sum)
 ggplot(stepperday, aes(steps)) + geom_histogram(breaks = c(0, 5000, 10000, 15000, 20000, 25000)) + labs(x = expression("steps per day"))
 ```
@@ -55,7 +55,7 @@ The mean total number of step taken per day is **10766.19**; the median is **107
 ##What is the average daily activity pattern?
 *Time series plot of the 5-minute interval and the average number of steps taken, averaged across all days.
 
-```{R, echo = TURE}
+```{R}
 stepinterval<- aggregate(steps ~ interval, data = Dataset, FUN = function(x){mean(x, na.rm = TRUE)})
 ggplot(stepinterval, aes(interval, steps)) + geom_line(lwd=1) + labs(X = expression("5-minute Interval")) + labs(y = expression("Average Strps"))
 ```
@@ -101,7 +101,7 @@ str(Dataset)
 ```
 
 *Histogram of the total number of steps taken each day
-```{R, echo = TURE}
+```{R}
 stepday <- aggregate(steps ~ date, data = Dataset, sum)
 ggplot(stepday, aes(steps)) + geom_histogram(breaks = c(0, 5000, 10000, 15000, 20000, 25000)) + labs(x = expression("Steps per day"))
 ```
@@ -140,7 +140,7 @@ Dataset$day <- as.factor(Dataset$day)
 ```
 
 *Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis)
-```{R, echo = TURE}
+```{R}
 conclusion <- aggregate(Dataset$steps, list(interval = Dataset$interval, day = Dataset$day), mean)
 names(conclusion) <- c("interval", "day", "steps")
 ggplot(conclusion, aes(interval, steps)) + geom_line(lwd = 1) + facet_wrap(~day)+ xlab("5-minute interval") + ylab("Steps")
