@@ -1,0 +1,149 @@
+##Introduction
+
+* It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+
+* This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+##Data
+
+*The data for this assignment can be downloaded from the following address:
+
+** Dataset: [Activity monitoring data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip)
+
+The variables included in this dataset are:
+
+** * steps: Number of steps taking in a 5-minute interval (missing values are coded as NA)
+
+** * date: The date on which the measurement was taken in YYYY-MM-DD format
+
+** * interval: Identifier for the 5-minute interval in which measurement was taken
+
+* The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.
+
+##Loading and preprocessing the data
+
+* load and proccess the dataset
+```{R, echo = TURE}
+library(lattice)
+library(knitr)
+library(dplyr)
+library(ggplot2)
+Dataset <- read.csv("activity.csv")
+head(Dataset)
+```
+
+##What is mean total number of steps taken per day?
+* Calculate the total number of steps taken per day, and make a histogram of the total number of steps taken each day
+```{R, echo = TURE}
+stepperday<- aggregate(steps ~ date, data = Dataset, sum)
+ggplot(stepperday, aes(steps)) + geom_histogram(breaks = c(0, 5000, 10000, 15000, 20000, 25000)) + labs(x = expression("steps per day"))
+```
+
+* Mean total number of steps per day
+```{R, echo = TURE}
+mean_step<- mean(stepperday$steps)
+mean_step
+```
+* Median toral number of steps per day
+```{R, echo = TURE}
+median_step<- median(stepperday$steps)
+median_step
+```
+
+The mean total number of step taken per day is **10766.19**; the median is **10765**. 
+
+##What is the average daily activity pattern?
+*Time series plot of the 5-minute interval and the average number of steps taken, averaged across all days.
+
+```{R, echo = TURE}
+stepinterval<- aggregate(steps ~ interval, data = Dataset, FUN = function(x){mean(x, na.rm = TRUE)})
+ggplot(stepinterval, aes(interval, steps)) + geom_line(lwd=1) + labs(X = expression("5-minute Interval")) + labs(y = expression("Average Strps"))
+```
+
+*The maximum 5-minutes interval
+```{R, echo = TURE}
+##Max interval
+stepinterval$interval[which.max(stepinterval$steps)]
+```
+The maxium 5-minute interval value locates in **835**
+```{R, echo = TURE}
+##average steps value
+max(stepinterval$steps)
+```
+The average steps value is **206**
+
+##Imputing missing values
+*Calculate the total number of missing values
+```{R, echo = TURE}
+nas<-sum(is.na(Dataset))
+nas
+```
+Totally **2304** values are missed
+
+*Filling in all of the missing values in the dataset using the mean of that 5-minute interval
+```{R, echo = TURE}
+for (i in 1:length(Dataset$steps)) {
+    if (is.na(Dataset[i, 1])) {
+      
+        steps_average <- subset(stepinterval, stepinterval$interval == as.numeric(Dataset[i, 3]))$steps
+        
+        Dataset[i, 1] <- steps_average
+    } else {
+        Dataset[i, 1] <- Dataset[i, 1]
+    }
+    Dataset
+}
+```
+
+*New dataset with the missing values filled in
+```{R, echo = TURE}
+str(Dataset)
+```
+
+*Histogram of the total number of steps taken each day
+```{R, echo = TURE}
+stepday <- aggregate(steps ~ date, data = Dataset, sum)
+ggplot(stepday, aes(steps)) + geom_histogram(breaks = c(0, 5000, 10000, 15000, 20000, 25000)) + labs(x = expression("Steps per day"))
+```
+
+*Calculate and report the mean and median total number of steps taken per day
+```{R, echo = TURE}
+meanf<- mean(stepday$steps)
+meanf
+```
+The mean of new dataset is **10766.19**
+```{R, echo = TURE}
+medianf<- median(stepday$steps)
+medianf
+```
+The meadian of new dataset is **10766.19**
+
+*The difference between the origin and changed datset is very small, only 1.19 increased after changing.
+
+##Are there differences in activity patterns between weekdays and weekends?
+* Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+```{R, echo = TURE}
+Dataset$date<- strptime(Dataset$date, "%Y-%m-%d")
+
+Dataset<- mutate(Dataset, day = weekdays(date))
+
+for (i in 1:length(Dataset$day)) {
+    if (Dataset[i, 4] == "week") {
+        Dataset[i, 4] <- "weekend"
+        
+    } else {
+        Dataset[i, 4] <- "weekday"
+        
+    }
+}
+Dataset$day <- as.factor(Dataset$day)
+```
+
+*Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis)
+```{R, echo = TURE}
+conclusion <- aggregate(Dataset$steps, list(interval = Dataset$interval, day = Dataset$day), mean)
+names(conclusion) <- c("interval", "day", "steps")
+ggplot(conclusion, aes(interval, steps)) + geom_line(lwd = 1) + facet_wrap(~day)+ xlab("5-minute interval") + ylab("Steps")
+```
+
+
